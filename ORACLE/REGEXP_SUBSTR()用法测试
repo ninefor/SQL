@@ -1,0 +1,2 @@
+select SUBSTR(w,0,1) week,SUBSTR(w,3) ke,id,kcmc from(select REGEXP_SUBSTR(week,'[0-9]\|[0-9],[0-9]+',1,rownum) w,id,kcmc from whcz.whczxx_scheduling where kcmc='英语'
+CONNECT BY ROWNUM <=LENGTH (week) - LENGTH (REPLACE (week, ',', '')))
