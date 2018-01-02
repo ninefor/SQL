@@ -1,0 +1,53 @@
+中介考核打分--
+declare @s nvarchar(4000)
+select @s=isnull(@s+',','')+quotename(Name)
+from syscolumns where ID=object_id('WO_PSBGCG_ZJKH') and Name not in('id','zjmc','WO_PSBGCG_ID')
+order by Colid
+exec('update k set k.df=z.df from (select zjmc,khnr,df from WO_PSBGCG_ZJKH  unpivot (df for khnr in('+@s+'))b where WO_PSBGCG_ID=218) z,Entity_ZJKH1 k,tTableObj t where k.xmmc=16079 and k.zjmc=z.zjmc and k.xmfl=t.describe and t.tablename=''WO_PSBGCG_ZJKH'' and z.khnr=t.name')
+
+专家--
+declare @s nvarchar(4000)
+select @s=isnull(@s+',','')+quotename(Name)
+from syscolumns where ID=object_id('WO_PSBGCG_ZJKH1') and Name not in('id','zjxm','WO_PSBGCG_ID')
+order by Colid
+exec('update k set k.sjpf=z.df from (select zjxm,khnr,df from WO_PSBGCG_ZJKH1  unpivot (df for khnr in('+@s+'))b where WO_PSBGCG_ID=218) z,Entity_ZJKH k,tTableObj t where k.xmmc=16079 and k.zjxm=z.zjxm and k.F2=t.describe and t.tablename=''WO_PSBGCG_ZJKH1'' and z.khnr=t.name')
+
+
+
+---------------------------------------------------------------------------------------------
+增加合法性验证--
+select * from tSequence where name='tFieldValidator'
+declare @mid INT
+select @mid=id+1 from tSequence where name='tFieldValidator'
+insert into tFieldValidator(ID,Tablename,columnname,validator,Expression,Message,Attribute) values(@mid,'WO_PSBGCG_ZJKH','F3','range','0,50','{0}打分不在参考分内',0)
+update tSequence set id=@mid  where name='tFieldValidator'
+
+----------------------------------------------------------------------------------------------
+增加列--
+
+declare @name varchar(50)
+select top 1 @name='F'+convert(varchar(20),convert(int,1+substring(name,2,len(name)))) from tTableObj where tablename='WO_PSBGCG_ZJKH' and name like 'F%'  order by len(name) desc,name desc
+insert into tTableObj(Tablename,Name,Type,Length,Control,Describe,PrimaryKey,Scale,OptionItem,RefTable,RefName,DefValue,DataType,Direction,Attribute,Expression,Category,EventSource,Note,CheckType,Metacolumn,InvisibleExp,DisableExp,StateBit,Properties,BizType)
+values('WO_PSBGCG_ZJKH',@name,1,10,1,'中介',0,0,null,'',null,null,0,0,0,null,'','','说明:',null,null,null,null,0,null,200)
+
+exec('alter table WO_PSBGCG_ZJKH add '+@name+' numeric')
+
+-----------------------------------------------------------------------------------------------
+修改--
+declare @name varchar(50)
+select  @name=name from tTableObj where tablename='WO_PSBGCG_ZJKH' and describe='测试分'
+update tTableObj set describe='测试' ,Note='说明1' where tablename='WO_PSBGCG_ZJKH' and describe='测试分'
+update tFieldValidator set expression='1,3' where tablename='WO_PSBGCG_ZJKH' and columnname=@name
+
+------------------------------------------------------------------------------------------------------------
+删除--
+
+declare @name varchar(50)
+select  @name=name from tTableObj where tablename='WO_PSBGCG_ZJKH1' and describe={0}
+delete tTableObj  where tablename='WO_PSBGCG_ZJKH1' and describe={0}
+delete tFieldValidator  where tablename='WO_PSBGCG_ZJKH1' and columnname=@name
+begin try
+exec('alter table WO_PSBGCG_ZJKH1 drop column '+@name)
+END try
+begin catch
+end catch
